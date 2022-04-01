@@ -7,6 +7,10 @@ from control_msgs.action import FollowJointTrajectory
 from threading import Event
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from tf2_ros import LookupException
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
+from tf_transformations import euler_from_quaternion
 from airobot_interfaces.srv import StringCommand
 from crane_plus_commander.kinematics import (
     from_gripper_ratio, gripper_in_range, inverse_kinematics, joint_in_range)
@@ -43,16 +47,19 @@ class Commander(Node):
         self.service = self.create_service(
             StringCommand, 'manipulation/command', self.command_callback,
             callback_group=self.callback_group)
+        self._tf_buffer = Buffer()
+        self._tf_listener = TransformListener(
+            self._tf_buffer, self, spin_thread=True)
 
     def command_callback(self, request, response):
         self.get_logger().info(f'command: {request.command}')
         words = request.command.split()
         if words[0] == 'set_pose':
             self.set_pose(words, response)
-        elif words[0] == 'set_gripper':
-            self.set_gripper(words, response)
         elif words[0] == 'set_endtip':
             self.set_endtip(words, response)
+        elif words[0] == 'set_gripper':
+            self.set_gripper(words, response)
         else:
             response.answer = f'NG {words[0]} not supported'
         self.get_logger().info(f'answer: {response.answer}')
@@ -66,6 +73,31 @@ class Commander(Node):
             response.answer = f'NG {words[1]} not found'
             return
         r = self.send_goal_joint(self.poses[words[1]], 3.0)
+        if self.check_action_result(r, response):
+            return
+        response.answer = 'OK'
+
+    def set_endtip(self, words, response):
+        if len(words) < 2:
+            response.answer = f'NG {words[0]} argument required'
+            return
+        target = words[1]
+        xyzrpy, e = self.get_xyzrpy(target)
+        if xyzrpy == []:
+            response.answer = f'NG {target} {e}'
+            return
+        [x, y, z, _, pitch, _] = xyzrpy
+        elbow_up = True
+        # inverse_kinematics()のpitchとは符号が逆
+        joint = inverse_kinematics([x, y, z, -pitch], elbow_up)
+        if joint is None:
+            response.answer = 'NG no solution'
+            return
+        if not all(joint_in_range(joint)):
+            response.answer = 'NG out of range'
+            return
+        dt = 3.0
+        r = self.send_goal_joint(joint, dt)
         if self.check_action_result(r, response):
             return
         response.answer = 'OK'
@@ -89,31 +121,25 @@ class Commander(Node):
             return
         response.answer = 'OK'
 
-    def set_endtip(self, words, response):
-        if len(words) < 5:
-            response.answer = f'NG {words[0]} 4 arguments required'
-            return
+    def get_xyzrpy(self, name):
+        when = rclpy.time.Time()
         try:
-            x = float(words[1])
-            y = float(words[2])
-            z = float(words[3])
-            pitch = float(words[4])
-        except ValueError:
-            response.answer = f'NG {words[1:5]} unsuitable'
-            return
-        elbow_up = True
-        joint = inverse_kinematics([x, y, z, pitch], elbow_up)
-        if joint is None:
-            response.answer = 'NG no solution'
-            return
-        if not all(joint_in_range(joint)):
-            response.answer = 'NG out of range'
-            return
-        dt = 3.0
-        r = self.send_goal_joint(joint, dt)
-        if self.check_action_result(r, response):
-            return
-        response.answer = 'OK'
+            trans = self._tf_buffer.lookup_transform(
+                'crane_plus_base',
+                name,
+                when,
+                timeout=Duration(seconds=1.0))
+        except LookupException as e:
+            return [], e
+        tx = trans.transform.translation.x
+        ty = trans.transform.translation.y
+        tz = trans.transform.translation.z
+        rx = trans.transform.rotation.x
+        ry = trans.transform.rotation.y
+        rz = trans.transform.rotation.z
+        rw = trans.transform.rotation.w
+        roll, pitch, yaw = euler_from_quaternion([rx, ry, rz, rw])
+        return [tx, ty, tz, roll, pitch, yaw], ''
 
     def check_action_result(self, r, response, message=''):
         if message != '':

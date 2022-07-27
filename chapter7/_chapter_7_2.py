@@ -17,7 +17,7 @@ class SpeechService(rclpy.node.Node):
         self.init_rec = sr.Recognizer()
 
         self.service = self.create_service(
-            StringCommand, '/speech_service/wake_up', self.command_callback)
+            StringCommand, 'voice/command', self.command_callback)
 
         self.lang = 'en'
         self.mp3 = Mpg123()

@@ -14,9 +14,9 @@ import pyaudio
 from io import BytesIO
 from mpg123 import Mpg123, Out123
 
-class VoiceServer(rclpy.node.Node):
+class SpeechService(rclpy.node.Node):
     def __init__(self):
-        super().__init__("voice_server")
+        super().__init__("speech_service")
 
         self.get_logger().info("音声サーバーを起動しました")
 
@@ -26,7 +26,7 @@ class VoiceServer(rclpy.node.Node):
         self.objects = ['bottle', 'cup']
         self.places = ['kitchen', 'living']
 
-        self.service = self.create_service(StringCommand, '/speech_server/wake_up', self.command_callback)
+        self.service = self.create_service(StringCommand, '/speech_service/wake_up', self.command_callback)
 
         self.lang = 'en'
         self.mp3 = Mpg123()
@@ -105,10 +105,10 @@ class VoiceServer(rclpy.node.Node):
 def main():
     rclpy.init()
 
-    voice_server = VoiceServer()
+    speech_service = SpeechService()
 
-    rclpy.spin(voice_server)
-    voice_server.destroy_node()
+    rclpy.spin(speech_service)
+    speech_service.destroy_node()
 
     rclpy.shutdown()
 

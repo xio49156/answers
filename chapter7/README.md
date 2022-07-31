@@ -24,3 +24,6 @@ chapter7/bringme_sm/bringme_sm/bringme_sm.py
 find_object_name(response.answer)  
 find_location_name(response.answer)  
 を新たに関数として追加する必要があります．  
+
+
+後日綺麗に編集

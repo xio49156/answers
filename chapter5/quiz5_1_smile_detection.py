@@ -1,9 +1,9 @@
-# Basics ROS 2 program to subscribe to real-time streaming 
-# video from RGB-D sensor
-# Author:
-# - Jeffrey
-# - https://github.com/jeffreyttc
-  
+# Quiz 5.1 Smile Detection
+# 
+# Copyright (c) 2022, TAN Jeffrey Too Chuan (ai-robot-book@googlegroups.com)
+# All rights reserved.
+# This source code is licensed under the Apache License 2.0 found in the LICENSE file in the root directory of this project.
+
 # Import the necessary libraries
 import rclpy # Python library for ROS 2
 from rclpy.node import Node # Handles the creation of nodes
@@ -19,14 +19,14 @@ from rclpy.qos import qos_profile_sensor_data
  
 class SmileDetection(Node):
   """
-  Create an SmileDetection class, which is a subclass of the Node class.
+  Create a SmileDetection class, which is a subclass of the Node class.
   """
   def __init__(self):
     """
     Class constructor to set up the node
     """
     # Initiate the Node class's constructor and give it a name
-    super().__init__('smile_detection')
+    super().__init__('quiz5_1_smile_detection')
       
     # Create the subscriber. This subscriber will receive an Image
     # from the video_frames topic. The queue size is 10 messages.
@@ -35,7 +35,6 @@ class SmileDetection(Node):
       '/image_raw',
       self.listener_callback, 
       qos_profile_sensor_data)
-    self.subscription # prevent unused variable warning
 
     self.publisher = self.create_publisher(Image, 'smile_detection_result', 10)
 
@@ -82,15 +81,15 @@ def main(args=None):
   rclpy.init(args=args)
   
   # Create the node
-  smile_detection = SmileDetection()
+  quiz5_1_smile_detection = SmileDetection()
   
   # Spin the node so the callback function is called.
-  rclpy.spin(smile_detection)
+  rclpy.spin(quiz5_1_smile_detection)
   
   # Destroy the node explicitly
   # (optional - otherwise it will be done automatically
   # when the garbage collector destroys the node object)
-  smile_detection.destroy_node()
+  quiz5_1_smile_detection.destroy_node()
   
   # Shutdown the ROS client library for Python
   rclpy.shutdown()

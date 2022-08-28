@@ -28,6 +28,10 @@ ros2 run sample_sm challenge_7_1
 ```
             'voice_node = pseudo_node.challenge_7_2:main'
 ``` 
+- 端末で以下を実行
+```
+ros2 launch bringme_sm bringme.launch.py
+```
 
 ### 備考
 現状は認識した音声が何であろうと，次のステートへ進むというプログラムになっています（何も音声を認識しなければステートは進みません）．

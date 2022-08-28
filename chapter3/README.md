@@ -1,4 +1,4 @@
-# ダミー
+# 3章の解答例
 
 - このフォルダの```.py```ファイルを，```~/airobot_ws/src/chapter3/speech_service/speech_service```にコピーする．
 - ```~/airobot_ws/src/chapter3/speech_service/setup.py```の```entry_points```の設定のリストに以下の行を追加する．
